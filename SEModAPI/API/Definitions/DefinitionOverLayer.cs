@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Reflection;
-
+using ProtoBuf;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Common.ObjectBuilders.Definitions;
 
@@ -16,24 +16,21 @@ using SEModAPI.Support;
 namespace SEModAPI.API.Definitions
 {
 	/// <summary>
-	/// This class is only intended for easy data access and management. It is a wrapper around all MyObjectBuilder_Definitions children sub type
+	/// This class is only intended for easy data access and management. It is a wrapper around all MyObjectBuilder_DefinitionsBase children sub type
 	/// </summary>
-	public abstract class OverLayerDefinition<TMyObjectBuilder_Definitions_SubType>
+	public abstract class DefinitionOverLayer
 	{
 		#region "Attributes"
 
-		protected TMyObjectBuilder_Definitions_SubType m_baseDefinition;
-		protected string m_name;
+		protected MyObjectBuilder_DefinitionBase m_baseDefinition;
 
 		#endregion
 
 		#region "Constructors and Initializers"
 
-		protected OverLayerDefinition(TMyObjectBuilder_Definitions_SubType baseDefinition)
+		protected DefinitionOverLayer(MyObjectBuilder_DefinitionBase baseDefinition)
 		{
 			m_baseDefinition = baseDefinition;
-			m_name = GetNameFrom(m_baseDefinition);
-			Changed = false;
 		}
 
 		#endregion
@@ -43,53 +40,45 @@ namespace SEModAPI.API.Definitions
 		/// <summary>
 		/// Gets the changed status of the object
 		/// </summary>
-		[Browsable(false)]
-		public bool Changed { get; protected set; }
+		[Browsable(true)]
+		[Description("Represent the state of changes in the object")]
+		public virtual bool Changed { get; protected set; }
 
 		/// <summary>
-		/// Obtain a nicely formated name of the object
+		/// Obtain the API formated name of the object
 		/// </summary>
 		[Browsable(false)]
-		public string Name
+		[ReadOnly(true)]
+		[Description("The formatted name of the object")]
+		public abstract string Name { get; }
+
+		/// <summary>
+		/// Gets the Internal data of the object
+		/// </summary>
+		[Browsable(false)]
+		[ReadOnly(true)]
+		[Description("Internal data of the object")]
+		protected MyObjectBuilder_DefinitionBase BaseDefinition
 		{
-			get { return GetNameFrom(m_baseDefinition); }
+			get { return m_baseDefinition; }
 		}
 
 		/// <summary>
 		/// Gets the internal data of the object
 		/// </summary>
-		[Browsable(false)]
-		public TMyObjectBuilder_Definitions_SubType BaseDefinition
+		[Browsable(true)]
+		[ReadOnly(true)]
+		[Description("The value ID representing the type of the object")]
+		public MyObjectBuilderTypeEnum TypeId
 		{
-			get { return m_baseDefinition; }
+			get { return m_baseDefinition.TypeId; }
 		}
 
-		#endregion
-
-		#region "Methods"
-
 		/// <summary>
-		/// This template method should return the representative name of the sub type underlayed by a children
+		/// Gets the internal Id of the instance
 		/// </summary>
-		/// <param name="definition">The definition from which to get the information</param>
-		/// <returns></returns>
-		protected abstract string GetNameFrom(TMyObjectBuilder_Definitions_SubType definition);
-
-		#endregion
-	}
-
-	public abstract class ObjectOverLayerDefinition<TMyObjectBuilder_Definitions_SubType> : OverLayerDefinition<TMyObjectBuilder_Definitions_SubType> where TMyObjectBuilder_Definitions_SubType : MyObjectBuilder_DefinitionBase
-	{
-		#region "Constructors and Initializers"
-
-		protected ObjectOverLayerDefinition(TMyObjectBuilder_Definitions_SubType baseDefinition)
-			: base(baseDefinition)
-		{ }
-
-		#endregion
-
-		#region "Properties"
-
+		[Browsable(true)]
+		[Description("The Id as SerializableDefinitionId that represent the Object representation")]
 		public SerializableDefinitionId Id
 		{
 			get { return m_baseDefinition.Id; }
@@ -101,6 +90,11 @@ namespace SEModAPI.API.Definitions
 			}
 		}
 
+		/// <summary>
+		/// Get the description of the object
+		/// </summary>
+		[Browsable(true)]
+		[Description("Represents the description of the object")]
 		public string Description
 		{
 			get { return m_baseDefinition.Description; }
@@ -113,14 +107,56 @@ namespace SEModAPI.API.Definitions
 		}
 
 		#endregion
+
+		#region "Methods"
+
+
+
+		/// <summary>
+		/// Serialization of the current instance
+		/// </summary>
+		/// <param name="xmlWriter">An initialized XmlWriter instance where to append the current object</param>
+		public void Serialize(XmlTextWriter xmlWriter)
+		{
+			xmlWriter.Formatting = Formatting.Indented;
+			xmlWriter.Indentation = 2;
+			xmlWriter.IndentChar = ' ';
+			SerializeSubType(xmlWriter);
+		}
+
+		/// <summary>
+		/// This metod serialize a sub-type into the given XMLTextWriter.
+		/// </summary>
+		/// <returns></returns>
+		protected abstract void SerializeSubType(XmlTextWriter xmlWriter);
+
+		/// <summary>
+		/// Serialization without exception.
+		/// </summary>
+		/// <param name="writer">An initialized XmlWriter instance where to append the current object</param>
+		/// <returns></returns>
+		public virtual bool TrySerialize(XmlTextWriter writer)
+		{
+			bool serialized = false;
+			try
+			{
+				Serialize(writer);
+				serialized = true;
+			}
+			catch (Exception)
+			{}
+			return serialized;
+		}
+
+		#endregion
 	}
 
 
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public abstract class OverLayerDefinitionsManager<T, U> where U : OverLayerDefinition<T>
+	public class DefinitionsOverLayerManager
 	{
 		#region "Attributes"
 
@@ -129,26 +165,26 @@ namespace SEModAPI.API.Definitions
 
 		//Use Long (key) as Id and OverLayerDefinition sub type (value) as Name
 		//For entity objects (saved game data) we use EntityId as the long key
-		private Dictionary<long, U> m_definitions = new Dictionary<long, U>();
+		private Dictionary<long, DefinitionOverLayer> m_definitions = new Dictionary<long, DefinitionOverLayer>();
 
 		#endregion
 
 		#region "Constructors and Initializers"
 
-		protected OverLayerDefinitionsManager()
+		protected DefinitionsOverLayerManager()
 		{
 			m_changed = false;
 			m_isMutable = true;
 		}
 
-		protected OverLayerDefinitionsManager(T[] baseDefinitions)
+		public DefinitionsOverLayerManager(MyObjectBuilder_DefinitionBase[] baseDefinitions)
 		{
 			m_changed = false;
 			m_isMutable = true;
 
 			foreach (var definition in baseDefinitions)
 			{
-				NewEntry(definition);
+				AddDefinition(definition);
 			}
 		}
 
@@ -156,27 +192,37 @@ namespace SEModAPI.API.Definitions
 
 		#region "Properties"
 
+		/// <summary>
+		/// Define if the object can be changed
+		/// </summary>
+		[Browsable(true)]
+		[Description("Define if the object can be changed")]
 		public bool IsMutable
 		{
 			get { return m_isMutable; }
 			set { m_isMutable = value; }
 		}
 
+		/// <summary>
+		/// Defines if the object has changed
+		/// </summary>
+		[Browsable(true)]
+		[Description("Defines if the object has changed")]
 		protected bool Changed
 		{
 			get
 			{
 				if (m_changed) return true;
-				foreach (var def in GetInternalData())
+				foreach (var def in Definitions)
 				{
-					if (GetChangedState(def.Value))
+					if (def.Changed)
 						return true;
 				}
 				return false;
 			}
 		}
 
-		public U[] Definitions
+		public DefinitionOverLayer[] Definitions
 		{
 			get
 			{
@@ -188,7 +234,7 @@ namespace SEModAPI.API.Definitions
 
 		#region "Methods"
 
-		protected virtual Dictionary<long, U> GetInternalData()
+		protected virtual Dictionary<long, DefinitionOverLayer> GetInternalData()
 		{
 			return m_definitions;
 		}
@@ -257,12 +303,15 @@ namespace SEModAPI.API.Definitions
 
 		#endregion
 
-		public U NewEntry()
+		public bool AddDefinition()
 		{
 			if (!IsMutable) return default(U);
 
-			var sourceInstance = (T)Activator.CreateInstance(typeof(T), new object[] { });
-			return NewEntry(sourceInstance);
+			var newEntry = CreateOverLayerSubTypeInstance(source);
+			GetInternalData().Add(m_definitions.Count, newEntry);
+			m_changed = true;
+
+			return newEntry;
 		}
 
 		public U NewEntry(long id)

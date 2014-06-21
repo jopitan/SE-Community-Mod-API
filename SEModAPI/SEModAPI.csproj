@@ -65,8 +65,10 @@
   <ItemGroup>
     <Compile Include="API\Definitions\AmmoMagazinesDefinition.cs" />
     <Compile Include="API\Definitions\CubeBlocks\AssemblerDefinition.cs" />
+    <Compile Include="API\Definitions\CubeBlocks\BlockDefinition.cs" />
     <Compile Include="API\Definitions\CubeBlocks\CargoContainerDefinition.cs" />
     <Compile Include="API\Definitions\CubeBlocks\CockpitDefinition.cs" />
+    <Compile Include="API\Definitions\CubeBlocks\CubeBlocksDefinitionManager.cs" />
     <Compile Include="API\Definitions\CubeBlocks\GravityGeneratorDefinition.cs" />
     <Compile Include="API\Definitions\CubeBlocks\GyroscopeDefinition.cs" />
     <Compile Include="API\Definitions\CubeBlocks\LightingBlockDefinition.cs" />
@@ -86,7 +88,7 @@
     <Compile Include="API\SaveData\Entity\MedicalRoomEntity.cs" />
     <Compile Include="API\SaveData\Entity\ReactorEntity.cs" />
     <Compile Include="API\SaveData\CubeGrid.cs" />
-    <Compile Include="API\Definitions\OverLayerDefinition.cs" />
+    <Compile Include="API\Definitions\DefinitionOverLayer.cs" />
     <Compile Include="API\Definitions\BlueprintsDefinition.cs" />
     <Compile Include="API\Definitions\ComponentsDefinition.cs" />
     <Compile Include="API\Definitions\ConfigurationDefinition.cs" />
