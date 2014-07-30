@@ -33,6 +33,7 @@ using SEModAPIInternal.Support;
 
 using VRage.Common.Utils;
 using VRageMath;
+using SEServerExtender.Properties;
 
 namespace SEServerExtender
 {
@@ -124,9 +125,12 @@ namespace SEServerExtender
 				CMB_Control_AutosaveInterval.Items.Add(2);
 				CMB_Control_AutosaveInterval.Items.Add(5);
 				CMB_Control_AutosaveInterval.Items.Add(10);
-				CMB_Control_AutosaveInterval.Items.Add(30);
-				CMB_Control_AutosaveInterval.SelectedIndex = 2;
+                CMB_Control_AutosaveInterval.Items.Add(30);
+                CMB_Control_AutosaveInterval.Items.Add("Set your own");
+				CMB_Control_AutosaveInterval.SelectedIndex = Settings.Default.Control_AutoIntervalIndex;
 				CMB_Control_AutosaveInterval.EndUpdate();
+
+                CMB_Control_AutoSaveIntervalNumeric.Value = Settings.Default.Control_AutoIntervalNumeric;
 			}
 			catch (AutoException)
 			{
@@ -287,21 +291,42 @@ namespace SEServerExtender
 			PG_Control_Server_Properties.SelectedObject = m_server.Config;
 		}
 
+        private void CMB_Control_AutoSaveIntervalNumeric_ValueChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                var interval = (double)CMB_Control_AutoSaveIntervalNumeric.Value;
+                m_server.AutosaveInterval = interval * 60000;
+                Settings.Default.Control_AutoIntervalNumeric = CMB_Control_AutoSaveIntervalNumeric.Value;
+                Settings.Default.Save();
+            }
+            catch (Exception)
+            { }
+        }
+
 		private void CMB_Control_AutosaveInterval_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			if (!CMB_Control_AutosaveInterval.Enabled || CMB_Control_AutosaveInterval.SelectedIndex == -1) return;
 
-			double interval = 2;
 			try
 			{
-				interval = double.Parse(CMB_Control_AutosaveInterval.Text);
+                if (CMB_Control_AutosaveInterval.Text == "Set your own")
+                {
+                    CMB_Control_AutoSaveIntervalNumeric.Enabled = true;
+                }
+                else 
+                {
+                    CMB_Control_AutoSaveIntervalNumeric.Enabled = false;
+				    double interval = double.Parse(CMB_Control_AutosaveInterval.Text);
+                    m_server.AutosaveInterval = interval * 60000;
+                }
+                Settings.Default.Control_AutoIntervalIndex = CMB_Control_AutosaveInterval.SelectedIndex;
+                Settings.Default.Save();
 			}
 			catch (Exception ex)
 			{
 				//Do something
 			}
-
-			m_server.AutosaveInterval = interval * 60000;
 		}
 
 		private void UpdateControls()
