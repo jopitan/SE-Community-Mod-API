@@ -52,7 +52,10 @@ namespace SEServerExtender
 
 		//Timers
 		private System.Timers.Timer m_pluginMainLoop;
-		private System.Timers.Timer m_autosaveTimer;
+		private Thread m_autosaveTimer;
+
+        //Threads
+        public Threads.SaveServer threadSaveServer;
 
 		#endregion
 
@@ -73,9 +76,8 @@ namespace SEServerExtender
 			m_pluginMainLoop.Interval = 200;
 			m_pluginMainLoop.Elapsed += PluginManagerMain;
 
-			m_autosaveTimer = new System.Timers.Timer();
-			m_autosaveTimer.Interval = 120000;
-			m_autosaveTimer.Elapsed += AutoSaveMain;
+            threadSaveServer = new Threads.SaveServer();
+            m_autosaveTimer = new Thread(new ThreadStart(threadSaveServer.Run));
 
 			if(m_commandLineArgs.instanceName != "")
 				PluginManager.Instance.LoadPlugins(m_commandLineArgs.instanceName);
@@ -171,11 +173,9 @@ namespace SEServerExtender
 			set { m_commandLineArgs.instanceName = value; }
 		}
 
-		public double AutosaveInterval
-		{
-			get { return m_autosaveTimer.Interval; }
-			set { m_autosaveTimer.Interval = value; }
-		}
+        public int AutosaveInterval { get; set; }
+
+
 
 		#endregion
 
@@ -201,11 +201,6 @@ namespace SEServerExtender
 				}
 				m_pluginManager.Update();
 			}
-		}
-		
-		private void AutoSaveMain(object sender, EventArgs e)
-		{
-			WorldManager.Instance.SaveWorld();
 		}
 
 		private void RunServer()
@@ -260,7 +255,10 @@ namespace SEServerExtender
 
 				PluginManager.Instance.LoadPlugins(m_commandLineArgs.instanceName);
 				m_pluginMainLoop.Start();
-				m_autosaveTimer.Start();
+                if(m_autosaveTimer.ThreadState != ThreadState.Running)
+				    m_autosaveTimer.Start();
+                while (m_autosaveTimer.ThreadState == ThreadState.Unstarted)
+                    Thread.Sleep(1);
 
 				m_isServerRunning = true;
 
@@ -277,7 +275,8 @@ namespace SEServerExtender
 		{
 			m_pluginMainLoop.Stop();
 			m_pluginManager.Shutdown();
-
+            threadSaveServer.Shutdown();
+                
 			//m_serverWrapper.StopServer();
 			m_runServerThread.Interrupt();
 

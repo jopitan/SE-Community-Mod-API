@@ -78,11 +78,11 @@
             this.TAB_Utilities_Page = new System.Windows.Forms.TabPage();
             this.splitContainer4 = new System.Windows.Forms.SplitContainer();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.TXT_Utilities_FloatingObjectAmount = new SEModAPI.Support.NumericTextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.BTN_Utilities_ClearFloatingObjectsNow = new System.Windows.Forms.Button();
             this.CHK_Utilities_FloatingObjectAutoClean = new System.Windows.Forms.CheckBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.TXT_Utilities_FloatingObjectAmount = new SEModAPI.Support.NumericTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -787,15 +787,6 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Floating Object Control";
             // 
-            // TXT_Utilities_FloatingObjectAmount
-            // 
-            this.TXT_Utilities_FloatingObjectAmount.AllowSpace = false;
-            this.TXT_Utilities_FloatingObjectAmount.Location = new System.Drawing.Point(132, 96);
-            this.TXT_Utilities_FloatingObjectAmount.Name = "TXT_Utilities_FloatingObjectAmount";
-            this.TXT_Utilities_FloatingObjectAmount.Size = new System.Drawing.Size(63, 20);
-            this.TXT_Utilities_FloatingObjectAmount.TabIndex = 6;
-            this.TXT_Utilities_FloatingObjectAmount.Text = "512";
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -833,6 +824,15 @@
             this.statusStrip1.Size = new System.Drawing.Size(951, 22);
             this.statusStrip1.TabIndex = 0;
             this.statusStrip1.Text = "statusStrip1";
+            // 
+            // TXT_Utilities_FloatingObjectAmount
+            // 
+            this.TXT_Utilities_FloatingObjectAmount.AllowSpace = false;
+            this.TXT_Utilities_FloatingObjectAmount.Location = new System.Drawing.Point(132, 96);
+            this.TXT_Utilities_FloatingObjectAmount.Name = "TXT_Utilities_FloatingObjectAmount";
+            this.TXT_Utilities_FloatingObjectAmount.Size = new System.Drawing.Size(63, 20);
+            this.TXT_Utilities_FloatingObjectAmount.TabIndex = 6;
+            this.TXT_Utilities_FloatingObjectAmount.Text = "512";
             // 
             // SEServerExtender
             // 

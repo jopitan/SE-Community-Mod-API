@@ -295,8 +295,8 @@ namespace SEServerExtender
         {
             try
             {
-                var interval = (double)CMB_Control_AutoSaveIntervalNumeric.Value;
-                m_server.AutosaveInterval = interval * 60000;
+                var interval = (int) CMB_Control_AutoSaveIntervalNumeric.Value;
+                m_server.threadSaveServer.Interval = interval * 1000;
                 Settings.Default.Control_AutoIntervalNumeric = CMB_Control_AutoSaveIntervalNumeric.Value;
                 Settings.Default.Save();
             }
@@ -313,12 +313,13 @@ namespace SEServerExtender
                 if (CMB_Control_AutosaveInterval.Text == "Set your own")
                 {
                     CMB_Control_AutoSaveIntervalNumeric.Enabled = true;
+                    m_server.threadSaveServer.Interval = (int) CMB_Control_AutoSaveIntervalNumeric.Value * 1000;
                 }
                 else 
                 {
                     CMB_Control_AutoSaveIntervalNumeric.Enabled = false;
-				    double interval = double.Parse(CMB_Control_AutosaveInterval.Text);
-                    m_server.AutosaveInterval = interval * 60000;
+				    var interval = int.Parse(CMB_Control_AutosaveInterval.Text);
+                    m_server.threadSaveServer.Interval = interval * 1000;
                 }
                 Settings.Default.Control_AutoIntervalIndex = CMB_Control_AutosaveInterval.SelectedIndex;
                 Settings.Default.Save();
@@ -365,6 +366,7 @@ namespace SEServerExtender
 				CMB_Control_CommonInstanceList.Enabled = false;
 
 			TXT_Chat_Message.Enabled = m_server.IsRunning;
+            
 
 			PG_Entities_Details.Enabled = m_server.IsRunning;
 			PG_Factions.Enabled = m_server.IsRunning;
@@ -1641,6 +1643,7 @@ namespace SEServerExtender
 
 		#endregion
 
-		#endregion
-	}
+
+        #endregion
+    }
 }
