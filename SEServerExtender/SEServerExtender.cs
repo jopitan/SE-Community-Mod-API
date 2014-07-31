@@ -1648,6 +1648,11 @@ namespace SEServerExtender
 
 		#endregion
 
+        private void automatedButtonChat_Click(object sender, EventArgs e)
+        {
+            var messageDialog = new Forms.Messages(this).ShowDialog();
+        }
+
         #endregion
     }
 }

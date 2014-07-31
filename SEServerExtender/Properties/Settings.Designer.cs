@@ -46,5 +46,16 @@ namespace SEServerExtender.Properties {
                 this["Control_AutoIntervalNumeric"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection Chat_Auto_Messages {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["Chat_Auto_Messages"]));
+            }
+            set {
+                this["Chat_Auto_Messages"] = value;
+            }
+        }
     }
 }

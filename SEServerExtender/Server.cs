@@ -53,9 +53,11 @@ namespace SEServerExtender
 		//Timers
 		private System.Timers.Timer m_pluginMainLoop;
 		private Thread m_autosaveTimer;
+        private Thread m_chatAutoMessaging;
 
         //Threads
         public Threads.SaveServer threadSaveServer;
+        public Threads.ChatAutoMessaging threadAutoMessageServer;
 
 		#endregion
 
@@ -78,6 +80,10 @@ namespace SEServerExtender
 
             threadSaveServer = new Threads.SaveServer();
             m_autosaveTimer = new Thread(new ThreadStart(threadSaveServer.Run));
+
+            threadAutoMessageServer = new Threads.ChatAutoMessaging();
+            threadAutoMessageServer.Interval = 30000;
+            m_chatAutoMessaging = new Thread(new ThreadStart(threadAutoMessageServer.Run));
 
 			if(m_commandLineArgs.instanceName != "")
 				PluginManager.Instance.LoadPlugins(m_commandLineArgs.instanceName);
@@ -260,6 +266,11 @@ namespace SEServerExtender
                 while (m_autosaveTimer.ThreadState == ThreadState.Unstarted)
                     Thread.Sleep(1);
 
+                if (m_chatAutoMessaging.ThreadState != ThreadState.Running)
+                    m_chatAutoMessaging.Start();
+                while (m_chatAutoMessaging.ThreadState == ThreadState.Unstarted)
+                    Thread.Sleep(1);
+
 				m_isServerRunning = true;
 
 				m_runServerThread = new Thread(new ThreadStart(this.RunServer));
@@ -276,6 +287,7 @@ namespace SEServerExtender
 			m_pluginMainLoop.Stop();
 			m_pluginManager.Shutdown();
             threadSaveServer.Shutdown();
+            threadAutoMessageServer.Shutdown();
                 
 			//m_serverWrapper.StopServer();
 			m_runServerThread.Interrupt();

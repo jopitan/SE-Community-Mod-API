@@ -58,8 +58,9 @@
             this.LST_Chat_ConnectedPlayers = new System.Windows.Forms.ListBox();
             this.LST_Chat_Messages = new System.Windows.Forms.ListBox();
             this.splitContainer7 = new System.Windows.Forms.SplitContainer();
-            this.TXT_Chat_Message = new System.Windows.Forms.TextBox();
+            this.automatedButtonChat = new System.Windows.Forms.Button();
             this.BTN_Chat_Send = new System.Windows.Forms.Button();
+            this.TXT_Chat_Message = new System.Windows.Forms.TextBox();
             this.TAB_Factions_Page = new System.Windows.Forms.TabPage();
             this.splitContainer9 = new System.Windows.Forms.SplitContainer();
             this.splitContainer10 = new System.Windows.Forms.SplitContainer();
@@ -83,7 +84,6 @@
             this.CHK_Utilities_FloatingObjectAutoClean = new System.Windows.Forms.CheckBox();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.splitContainer8 = new System.Windows.Forms.SplitContainer();
-            this.automatedButtonChat = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -112,7 +112,6 @@
             this.splitContainer6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer7)).BeginInit();
             this.splitContainer7.Panel1.SuspendLayout();
-            this.splitContainer7.Panel2.SuspendLayout();
             this.splitContainer7.SuspendLayout();
             this.TAB_Factions_Page.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer9)).BeginInit();
@@ -528,33 +527,40 @@
             // 
             // splitContainer7.Panel1
             // 
+            this.splitContainer7.Panel1.Controls.Add(this.automatedButtonChat);
             this.splitContainer7.Panel1.Controls.Add(this.BTN_Chat_Send);
             this.splitContainer7.Panel1.Controls.Add(this.TXT_Chat_Message);
-            // 
-            // splitContainer7.Panel2
-            // 
-            this.splitContainer7.Panel2.Controls.Add(this.automatedButtonChat);
             this.splitContainer7.Size = new System.Drawing.Size(937, 29);
             this.splitContainer7.SplitterDistance = 800;
             this.splitContainer7.TabIndex = 2;
             // 
-            // TXT_Chat_Message
+            // automatedButtonChat
             // 
-            this.TXT_Chat_Message.Location = new System.Drawing.Point(0, 0);
-            this.TXT_Chat_Message.Name = "TXT_Chat_Message";
-            this.TXT_Chat_Message.Size = new System.Drawing.Size(579, 20);
-            this.TXT_Chat_Message.TabIndex = 0;
-            this.TXT_Chat_Message.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TXT_Chat_Message_KeyDown);
+            this.automatedButtonChat.Location = new System.Drawing.Point(666, 4);
+            this.automatedButtonChat.Name = "automatedButtonChat";
+            this.automatedButtonChat.Size = new System.Drawing.Size(75, 23);
+            this.automatedButtonChat.TabIndex = 0;
+            this.automatedButtonChat.Text = "Messaging";
+            this.automatedButtonChat.UseVisualStyleBackColor = true;
+            this.automatedButtonChat.Click += new System.EventHandler(this.automatedButtonChat_Click);
             // 
             // BTN_Chat_Send
             // 
-            this.BTN_Chat_Send.Location = new System.Drawing.Point(585, 0);
+            this.BTN_Chat_Send.Location = new System.Drawing.Point(585, 4);
             this.BTN_Chat_Send.Name = "BTN_Chat_Send";
             this.BTN_Chat_Send.Size = new System.Drawing.Size(75, 23);
             this.BTN_Chat_Send.TabIndex = 1;
             this.BTN_Chat_Send.Text = "Send";
             this.BTN_Chat_Send.UseVisualStyleBackColor = true;
             this.BTN_Chat_Send.Click += new System.EventHandler(this.BTN_Chat_Send_Click);
+            // 
+            // TXT_Chat_Message
+            // 
+            this.TXT_Chat_Message.Location = new System.Drawing.Point(0, 6);
+            this.TXT_Chat_Message.Name = "TXT_Chat_Message";
+            this.TXT_Chat_Message.Size = new System.Drawing.Size(579, 20);
+            this.TXT_Chat_Message.TabIndex = 0;
+            this.TXT_Chat_Message.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TXT_Chat_Message_KeyDown);
             // 
             // TAB_Factions_Page
             // 
@@ -822,15 +828,6 @@
             this.splitContainer8.Size = new System.Drawing.Size(150, 100);
             this.splitContainer8.TabIndex = 0;
             // 
-            // automatedButtonChat
-            // 
-            this.automatedButtonChat.Location = new System.Drawing.Point(30, 3);
-            this.automatedButtonChat.Name = "automatedButtonChat";
-            this.automatedButtonChat.Size = new System.Drawing.Size(75, 23);
-            this.automatedButtonChat.TabIndex = 0;
-            this.automatedButtonChat.Text = "Messaging";
-            this.automatedButtonChat.UseVisualStyleBackColor = true;
-            // 
             // SEServerExtender
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -869,7 +866,6 @@
             this.splitContainer6.ResumeLayout(false);
             this.splitContainer7.Panel1.ResumeLayout(false);
             this.splitContainer7.Panel1.PerformLayout();
-            this.splitContainer7.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer7)).EndInit();
             this.splitContainer7.ResumeLayout(false);
             this.TAB_Factions_Page.ResumeLayout(false);
