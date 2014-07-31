@@ -49,11 +49,11 @@ namespace SEModAPI.API.Definitions
 
 		new public string Name
 		{
-			get { return m_baseDefinition.Name; }
+			get { return m_baseDefinition.SubtypeName; }
 			set
 			{
-				if (m_baseDefinition.Name == value) return;
-				m_baseDefinition.Name = value;
+                if (m_baseDefinition.SubtypeName == value) return;
+                m_baseDefinition.SubtypeName = value;
 				Changed = true;
 			}
 		}
@@ -110,7 +110,7 @@ namespace SEModAPI.API.Definitions
 
         protected override string GetNameFrom(MyObjectBuilder_ContainerTypeDefinition definition)
         {
-            return definition.Name;
+            return definition.SubtypeName;
         }
 
 		public ContainerTypeItem NewEntry()
