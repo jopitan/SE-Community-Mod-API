@@ -43,7 +43,7 @@ namespace SEServerExtender
 
 		//General
 		private static SEServerExtender m_instance;
-		private Server m_server;
+		public Server m_server;
 
 		//Timers
 		private System.Windows.Forms.Timer m_entityTreeRefreshTimer;
@@ -290,6 +290,11 @@ namespace SEServerExtender
 
 			PG_Control_Server_Properties.SelectedObject = m_server.Config;
 		}
+
+        private void CMB_Control_AutoSaveIntervalNumeric_KeyUp(object sender, KeyEventArgs e)
+        {
+            CMB_Control_AutoSaveIntervalNumeric_ValueChanged(sender, e);
+        }
 
         private void CMB_Control_AutoSaveIntervalNumeric_ValueChanged(object sender, EventArgs e)
         {
@@ -1642,7 +1647,6 @@ namespace SEServerExtender
 		}
 
 		#endregion
-
 
         #endregion
     }

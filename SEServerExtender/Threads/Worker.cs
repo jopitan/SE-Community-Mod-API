@@ -18,7 +18,6 @@ namespace SEServerExtender.Threads
             }
             set
             {
-                Console.WriteLine("Changed thread interval to: " + value.ToString());
                 interval = value;
             }
         }
@@ -26,6 +25,12 @@ namespace SEServerExtender.Threads
         public Worker()
         {
             Interval = 5000;
+            shutdown = false;
+        }
+
+        public Worker(int interval)
+        {
+            Interval = interval;
             shutdown = false;
         }
 

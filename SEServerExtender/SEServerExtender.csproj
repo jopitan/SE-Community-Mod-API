@@ -85,6 +85,7 @@
     <Compile Include="SEServerExtender.Designer.cs">
       <DependentUpon>SEServerExtender.cs</DependentUpon>
     </Compile>
+    <Compile Include="Threads\Chat.cs" />
     <Compile Include="Threads\SaveServer.cs" />
     <Compile Include="Threads\Worker.cs" />
   </ItemGroup>
