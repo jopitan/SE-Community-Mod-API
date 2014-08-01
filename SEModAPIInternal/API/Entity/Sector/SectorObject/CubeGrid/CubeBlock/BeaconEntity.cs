@@ -21,6 +21,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock
 
 		public static string BeaconNamespace = "6DDCED906C852CFDABA0B56B84D0BD74";
 		public static string BeaconClass = "BF2916D43CF7F023839AD13F50F31990";
+
 		public static string BeaconGetRadioManagerMethod = "A80801D0C8F1D45AB0E81B934FB5EF90";
 
 		#endregion
@@ -92,6 +93,26 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject.CubeGrid.CubeBlock
 		#endregion
 
 		#region "Methods"
+
+		public static bool ReflectionUnitTest()
+		{
+			try
+			{
+				bool result = true;
+
+				Type type = SandboxGameAssemblyWrapper.Instance.GetAssemblyType(BeaconNamespace, BeaconClass);
+				if (type == null)
+					throw new Exception("Could not find internal type for BeaconEntity");
+				result &= HasMethod(type, BeaconGetRadioManagerMethod);
+
+				return result;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+				return false;
+			}
+		}
 
 		#region "Internal"
 

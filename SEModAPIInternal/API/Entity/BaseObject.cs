@@ -191,12 +191,92 @@ namespace SEModAPIInternal.API.Entity
 			BaseObjectManager.SaveContentFile<MyObjectBuilder_Base, MyObjectBuilder_BaseSerializer>(ObjectBuilder, fileInfo);
 		}
 
-		public virtual void ReflectionUnitTest()
+		public static bool ReflectionUnitTest()
 		{
-			//Do stuff
+			return true;
 		}
 
 		#region "Internal"
+
+		internal static bool HasField(Type objectType, string fieldName)
+		{
+			try
+			{
+				if (fieldName == null || fieldName.Length == 0)
+					return false;
+				FieldInfo field = objectType.GetField(fieldName);
+				if (field == null)
+					field = objectType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+				if (field == null)
+					field = objectType.BaseType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+				if (field == null)
+				{
+					if(SandboxGameAssemblyWrapper.IsDebugging)
+						Console.WriteLine("Failed to find field '" + fieldName + "' in type '" + objectType.FullName + "'");
+					return false;
+				}
+				return true;
+			}
+			catch (Exception ex)
+			{
+				if (SandboxGameAssemblyWrapper.IsDebugging)
+					Console.WriteLine("Failed to find field '" + fieldName + "' in type '" + objectType.FullName + "': " + ex.Message);
+				LogManager.GameLog.WriteLine(ex);
+				return false;
+			}
+		}
+
+		internal static bool HasMethod(Type objectType, string methodName)
+		{
+			return HasMethod(objectType, methodName, null);
+		}
+
+		internal static bool HasMethod(Type objectType, string methodName, Type[] argTypes)
+		{
+			try
+			{
+				if (methodName == null || methodName.Length == 0)
+					return false;
+
+				if (argTypes == null)
+				{
+					MethodInfo method = objectType.GetMethod(methodName);
+					if (method == null)
+						method = objectType.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+					if (method == null && objectType.BaseType != null)
+						method = objectType.BaseType.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+					if (method == null)
+					{
+						if (SandboxGameAssemblyWrapper.IsDebugging)
+							Console.WriteLine("Failed to find method '" + methodName + "' in type '" + objectType.FullName + "'");
+						return false;
+					}
+				}
+				else
+				{
+					MethodInfo method = objectType.GetMethod(methodName, argTypes);
+					if (method == null)
+						method = objectType.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy, Type.DefaultBinder, argTypes, null);
+					if (method == null && objectType.BaseType != null)
+						method = objectType.BaseType.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy, Type.DefaultBinder, argTypes, null);
+					if (method == null)
+					{
+						if (SandboxGameAssemblyWrapper.IsDebugging)
+							Console.WriteLine("Failed to find method '" + methodName + "' in type '" + objectType.FullName + "'");
+						return false;
+					}
+				}
+
+				return true;
+			}
+			catch (Exception ex)
+			{
+				if (SandboxGameAssemblyWrapper.IsDebugging)
+					Console.WriteLine("Failed to find method '" + methodName + "' in type '" + objectType.FullName + "': " + ex.Message);
+				LogManager.GameLog.WriteLine(ex);
+				return false;
+			}
+		}
 
 		internal static FieldInfo GetStaticField(Type objectType, string fieldName)
 		{
@@ -557,6 +637,10 @@ namespace SEModAPIInternal.API.Entity
 
 		public void Refresh()
 		{
+			if (!IsDynamic)
+				return;
+			if (!IsMutable)
+				return;
 			if (IsResourceLocked)
 				return;
 			if (IsInternalResourceLocked)

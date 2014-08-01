@@ -36,12 +36,21 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 		public static string CharacterGetHealthMethod = "7047AFF5D44FC8A44572E92DBAD13011";
 		public static string CharacterDamageCharacterMethod = "CF6EEF37B5AE4047E65CA4A0BB43F774";
 		public static string CharacterSetHealthMethod = "92A0500FD8772AB1AC3A6F79FD2A1C72";
-		public static string CharacterGetBatteryCapacityMethod = "CF72A89940254CB8F535F177150FC743";
-		public static string CharacterSetBatteryCapacityMethod = "C3BF60F3540A8A48CB8FEE0CDD3A95C6";
+		public static string CharacterGetBatteryMethod = "CF72A89940254CB8F535F177150FC743";
 		public static string CharacterGetInventoryMethod = "GetInventory";
 		public static string CharacterGetDisplayNameMethod = "DB913685BC5152DC19A4796E9E8CF659";
 
 		public static string CharacterItemListField = "02F6468D864F3203482135334BEB58AD";
+
+		///////////////////////////////////////////////////////////
+
+		public static string CharacterBatteryNamespace = "FB8C11741B7126BD9C97FE76747E087F";
+		public static string CharacterBatteryClass = "328929D5EC05DF770D51383F6FC0B025";
+
+		public static string CharacterBatteryGetBatteryCapacityMethod = "CE7D13B1E1E0E9EBF10ABF14BD645FC1";
+		public static string CharacterBatterySetBatteryCapacityMethod = "C3BF60F3540A8A48CB8FEE0CDD3A95C6";
+
+		public static string CharacterBatteryCapacityField = "0BAEC0F968A4BEAE30E7C46D9406765C";
 
 		#endregion
 
@@ -68,7 +77,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			m_inventory = new InventoryEntity(definition.Inventory, InternalGetCharacterInventory());
 
 			EntityEventManager.EntityEvent newEvent = new EntityEventManager.EntityEvent();
-			newEvent.type = EntityEventManager.EntityEventType.OnPlayerJoined;
+			newEvent.type = EntityEventManager.EntityEventType.OnCharacterCreated;
 			newEvent.timestamp = DateTime.Now;
 			newEvent.entity = this;
 			newEvent.priority = 1;
@@ -243,6 +252,38 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 
 		#region "Methods"
 
+		public static bool ReflectionUnitTest()
+		{
+			try
+			{
+				Type type = InternalType;
+				if (type == null)
+					throw new Exception("Could not find internal type for CharacterEntity");
+				bool result = true;
+				result &= BaseObject.HasMethod(type, CharacterGetHealthMethod);
+				result &= BaseObject.HasMethod(type, CharacterDamageCharacterMethod);
+				result &= BaseObject.HasMethod(type, CharacterSetHealthMethod);
+				result &= BaseObject.HasMethod(type, CharacterGetBatteryMethod);
+				result &= BaseObject.HasMethod(type, CharacterGetInventoryMethod);
+				result &= BaseObject.HasMethod(type, CharacterGetDisplayNameMethod);
+				result &= BaseObject.HasField(type, CharacterItemListField);
+
+				Type type2 = SandboxGameAssemblyWrapper.Instance.GetAssemblyType(CharacterBatteryNamespace, CharacterBatteryClass);
+				if (type2 == null)
+					throw new Exception("Could not find battery type for CharacterEntity");
+				result &= BaseObject.HasMethod(type2, CharacterBatteryGetBatteryCapacityMethod);
+				result &= BaseObject.HasMethod(type2, CharacterBatterySetBatteryCapacityMethod);
+				result &= BaseObject.HasField(type2, CharacterBatteryCapacityField);
+
+				return result;
+			}
+			catch (Exception ex)
+			{
+				LogManager.APILog.WriteLine(ex);
+				return false;
+			}
+		}
+
 		public override void Dispose()
 		{
 			m_isDisposed = true;
@@ -250,7 +291,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			LogManager.APILog.WriteLine("Disposing CharacterEntity '" + Name + "'");
 
 			EntityEventManager.EntityEvent newEvent = new EntityEventManager.EntityEvent();
-			newEvent.type = EntityEventManager.EntityEventType.OnPlayerLeft;
+			newEvent.type = EntityEventManager.EntityEventType.OnCharacterDeleted;
 			newEvent.timestamp = DateTime.Now;
 			newEvent.entity = this;
 			newEvent.priority = 1;
@@ -313,7 +354,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 		{
 			try
 			{
-				Object battery = InvokeEntityMethod(BackingObject, CharacterGetBatteryCapacityMethod, new object[] { });
+				Object battery = InvokeEntityMethod(BackingObject, CharacterGetBatteryMethod, new object[] { });
 
 				return battery;
 			}
@@ -330,7 +371,7 @@ namespace SEModAPIInternal.API.Entity.Sector.SectorObject
 			{
 				float capacity = Battery.CurrentCapacity;
 				Object battery = InternalGetCharacterBattery();
-				InvokeEntityMethod(battery, CharacterSetBatteryCapacityMethod, new object[] { capacity });
+				InvokeEntityMethod(battery, CharacterBatterySetBatteryCapacityMethod, new object[] { capacity });
 			}
 			catch (Exception ex)
 			{

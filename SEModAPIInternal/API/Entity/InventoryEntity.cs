@@ -38,7 +38,6 @@ namespace SEModAPIInternal.API.Entity
 		public static string InventoryGetObjectBuilderMethod = "EFBD3CF8717682D7B59A5878FF97E0BB";
 		public static string InventoryCleanUpMethod = "476A04917356C2C5FFE23B1CBFC11450";
 		public static string InventoryGetItemListMethod = "C43E297C0F568726D4BDD5D71B901911";
-
 		public static string InventoryAddItemAmountMethod = "FB009222ACFCEACDC546801B06DDACB6";
 		public static string InventoryRemoveItemAmountMethod = "623B0AC0E7D9C30410680C76A55F0C6B";
 
@@ -146,6 +145,38 @@ namespace SEModAPIInternal.API.Entity
 
 		#region "Methods"
 
+		public static bool ReflectionUnitTest()
+		{
+			try
+			{
+				Type type = InternalType;
+				if (type == null)
+					throw new Exception("Could not find internal type for InventoryEntity");
+				bool result = true;
+				result &= BaseObject.HasMethod(type, InventoryCalculateMassVolumeMethod);
+				result &= BaseObject.HasMethod(type, InventoryGetTotalVolumeMethod);
+				result &= BaseObject.HasMethod(type, InventoryGetTotalMassMethod);
+				result &= BaseObject.HasMethod(type, InventorySetFromObjectBuilderMethod);
+				result &= BaseObject.HasMethod(type, InventoryGetObjectBuilderMethod);
+				result &= BaseObject.HasMethod(type, InventoryCleanUpMethod);
+				result &= BaseObject.HasMethod(type, InventoryGetItemListMethod);
+				result &= BaseObject.HasMethod(type, InventoryAddItemAmountMethod);
+
+				Type[] argTypes = new Type[3];
+				argTypes[0] = typeof(Decimal);
+				argTypes[1] = typeof(MyObjectBuilder_PhysicalObject);
+				argTypes[2] = typeof(bool);
+				result &= BaseObject.HasMethod(type, InventoryRemoveItemAmountMethod, argTypes);
+
+				return result;
+			}
+			catch (Exception ex)
+			{
+				LogManager.APILog.WriteLine(ex);
+				return false;
+			}
+		}
+
 		public InventoryItemEntity NewEntry()
 		{
 			MyObjectBuilder_InventoryItem defaults = new MyObjectBuilder_InventoryItem();
@@ -162,26 +193,17 @@ namespace SEModAPIInternal.API.Entity
 			return newItem;
 		}
 
-		public InventoryItemEntity NewEntry(MyObjectBuilder_InventoryItem source)
+		public bool NewEntry(InventoryItemEntity source)
 		{
-			InventoryItemEntity newItem = m_itemManager.NewEntry<InventoryItemEntity>(source);
-			newItem.ItemId = NextItemId;
-			NextItemId = NextItemId + 1;
+			m_itemManager.AddEntry<InventoryItemEntity>(NextItemId, source);
+
+			//TODO - Figure out the right way to add new items
+			//Just updating an item amount doesn't seem to work right
+			UpdateItemAmount(source, (Decimal)(source.Amount * 2));
 
 			RefreshInventory();
 
-			return newItem;
-		}
-
-		public InventoryItemEntity NewEntry(InventoryItemEntity source)
-		{
-			InventoryItemEntity newItem = (InventoryItemEntity)m_itemManager.NewEntry(source);
-			newItem.ItemId = NextItemId;
-			NextItemId = NextItemId + 1;
-
-			RefreshInventory();
-
-			return newItem;
+			return true;
 		}
 
 		public bool DeleteEntry(InventoryItemEntity source)
@@ -510,6 +532,30 @@ namespace SEModAPIInternal.API.Entity
 
 		#region "Methods"
 
+		public static bool ReflectionUnitTest()
+		{
+			try
+			{
+				Type type = InternalType;
+				if (type == null)
+					throw new Exception("Could not find internal type for InventoryItemEntity");
+				bool result = true;
+				result &= BaseObject.HasMethod(type, InventoryItemGetObjectBuilderMethod);
+
+				return result;
+			}
+			catch (Exception ex)
+			{
+				LogManager.APILog.WriteLine(ex);
+				return false;
+			}
+		}
+
+		public override void Dispose()
+		{
+			Amount = 0;
+		}
+
 		private bool FindMatchingItem()
 		{
 			bool foundMatchingItem = false;
@@ -649,6 +695,7 @@ namespace SEModAPIInternal.API.Entity
 			{
 				Dictionary<Object, MyObjectBuilder_Base> objectBuilderList = GetObjectBuilderMap();
 				List<Object> rawEntities = GetBackingDataList();
+				Dictionary<long, BaseObject> internalDataCopy = new Dictionary<long, BaseObject>(GetInternalData());
 
 				if (objectBuilderList.Count != rawEntities.Count)
 				{
@@ -698,7 +745,7 @@ namespace SEModAPIInternal.API.Entity
 				}
 
 				//Cleanup old entities
-				foreach (var entry in GetInternalData())
+				foreach (var entry in internalDataCopy)
 				{
 					try
 					{
