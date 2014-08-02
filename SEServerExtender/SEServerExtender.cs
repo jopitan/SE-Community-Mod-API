@@ -20,6 +20,7 @@ using SEModAPI.API.Definitions;
 using SEModAPI.Support;
 
 using SEModAPIExtensions.API;
+using SEModAPIExtensions.API.Plugin;
 
 using SEModAPIInternal.API;
 using SEModAPIInternal.API.Common;
@@ -34,7 +35,6 @@ using SEModAPIInternal.Support;
 using VRage.Common.Utils;
 using VRageMath;
 using SEServerExtender.Properties;
-
 namespace SEServerExtender
 {
 	public partial class SEServerExtender : Form
@@ -64,6 +64,10 @@ namespace SEServerExtender
 		{
 			m_instance = this;
 			m_server = server;
+
+			//bool unitTestResult = BasicUnitTestManager.Instance.Run();
+			//if (!unitTestResult)
+				//Close();
 
 			//Run init functions
 			InitializeComponent();
@@ -125,11 +129,10 @@ namespace SEServerExtender
 				CMB_Control_AutosaveInterval.Items.Add(2);
 				CMB_Control_AutosaveInterval.Items.Add(5);
 				CMB_Control_AutosaveInterval.Items.Add(10);
-                CMB_Control_AutosaveInterval.Items.Add(30);
+				CMB_Control_AutosaveInterval.Items.Add(30);
                 CMB_Control_AutosaveInterval.Items.Add("Set your own");
-				CMB_Control_AutosaveInterval.SelectedIndex = Settings.Default.Control_AutoIntervalIndex;
+                CMB_Control_AutosaveInterval.SelectedIndex = Settings.Default.Control_AutoIntervalIndex;
 				CMB_Control_AutosaveInterval.EndUpdate();
-
                 CMB_Control_AutoSaveIntervalNumeric.Value = Settings.Default.Control_AutoIntervalNumeric;
 			}
 			catch (AutoException)
@@ -290,7 +293,6 @@ namespace SEServerExtender
 
 			PG_Control_Server_Properties.SelectedObject = m_server.Config;
 		}
-
         private void CMB_Control_AutoSaveIntervalNumeric_KeyUp(object sender, KeyEventArgs e)
         {
             CMB_Control_AutoSaveIntervalNumeric_ValueChanged(sender, e);
@@ -300,7 +302,7 @@ namespace SEServerExtender
         {
             try
             {
-                var interval = (int) CMB_Control_AutoSaveIntervalNumeric.Value;
+                var interval = (int)CMB_Control_AutoSaveIntervalNumeric.Value;
                 m_server.threadSaveServer.Interval = interval * 1000;
                 Settings.Default.Control_AutoIntervalNumeric = CMB_Control_AutoSaveIntervalNumeric.Value;
                 Settings.Default.Save();
@@ -308,31 +310,30 @@ namespace SEServerExtender
             catch (Exception)
             { }
         }
-
 		private void CMB_Control_AutosaveInterval_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			if (!CMB_Control_AutosaveInterval.Enabled || CMB_Control_AutosaveInterval.SelectedIndex == -1) return;
 
-			try
-			{
+            try
+            {
                 if (CMB_Control_AutosaveInterval.Text == "Set your own")
                 {
                     CMB_Control_AutoSaveIntervalNumeric.Enabled = true;
-                    m_server.threadSaveServer.Interval = (int) CMB_Control_AutoSaveIntervalNumeric.Value * 1000;
+                    m_server.threadSaveServer.Interval = (int)CMB_Control_AutoSaveIntervalNumeric.Value * 1000;
                 }
-                else 
+                else
                 {
                     CMB_Control_AutoSaveIntervalNumeric.Enabled = false;
-				    var interval = int.Parse(CMB_Control_AutosaveInterval.Text);
+                    var interval = int.Parse(CMB_Control_AutosaveInterval.Text);
                     m_server.threadSaveServer.Interval = interval * 1000;
                 }
                 Settings.Default.Control_AutoIntervalIndex = CMB_Control_AutosaveInterval.SelectedIndex;
                 Settings.Default.Save();
-			}
-			catch (Exception ex)
-			{
-				//Do something
-			}
+            }
+            catch (Exception ex)
+            {
+                //Do something
+            }
 		}
 
 		private void UpdateControls()
@@ -371,7 +372,6 @@ namespace SEServerExtender
 				CMB_Control_CommonInstanceList.Enabled = false;
 
 			TXT_Chat_Message.Enabled = m_server.IsRunning;
-            
 
 			PG_Entities_Details.Enabled = m_server.IsRunning;
 			PG_Factions.Enabled = m_server.IsRunning;
@@ -461,6 +461,7 @@ namespace SEServerExtender
 
 			RenderSectorObjectChildNodes(sectorObjectsNode);
 			sectorObjectsNode.Text = sectorObjectsNode.Name + " (" + SectorObjectManager.Instance.GetTypedInternalData<BaseEntity>().Count.ToString() + ")";
+			sectorObjectsNode.Tag = SectorObjectManager.Instance;
 
 			TRV_Entities.EndUpdate();
 		}
@@ -1060,12 +1061,28 @@ namespace SEServerExtender
 			BTN_Entities_New.Enabled = false;
 			BTN_Entities_Delete.Enabled = false;
 
-			if (e.Node == null)
-				return;
-			if (e.Node.Tag == null)
+			TreeNode selectedNode = e.Node;
+
+			if (selectedNode == null)
 				return;
 
-			var linkedObject = e.Node.Tag;
+			TreeNode parentNode = e.Node.Parent;
+
+			if (parentNode == null)
+				return;
+
+			if (parentNode.Tag != null && parentNode.Tag is SectorObjectManager)
+			{
+				if (selectedNode == parentNode.Nodes[0])
+				{
+					BTN_Entities_New.Enabled = true;
+				}
+			}
+
+			if (selectedNode.Tag == null)
+				return;
+
+			var linkedObject = selectedNode.Tag;
 			PG_Entities_Details.SelectedObject = linkedObject;
 
 			//Enable export for all objects that inherit from BaseObject
@@ -1078,13 +1095,6 @@ namespace SEServerExtender
 			if (linkedObject is BaseEntity)
 			{
 				BTN_Entities_Delete.Enabled = true;
-			}
-
-			//Temporarily disabled most of floating objects. They are badly bugged after 1.040
-			if (linkedObject is FloatingObject)
-			{
-				BTN_Entities_Export.Enabled = false;
-				BTN_Entities_Delete.Enabled = false;
 			}
 
 			if (linkedObject is CubeGridEntity)
@@ -1100,151 +1110,202 @@ namespace SEServerExtender
 
 			if (linkedObject is CharacterEntity)
 			{
-				BTN_Entities_New.Enabled = true;
-
 				CharacterEntity character = (CharacterEntity)linkedObject;
 
-				InventoryEntity inventory = character.Inventory;
+				if (e.Node.Nodes.Count < 1)
+				{
+					TRV_Entities.BeginUpdate();
 
-				TRV_Entities.BeginUpdate();
+					e.Node.Nodes.Clear();
+					TreeNode itemsNode = e.Node.Nodes.Add("Items");
+					itemsNode.Name = itemsNode.Text;
+					itemsNode.Tag = character.Inventory;
 
-				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node, inventory.Items);
-
-				TRV_Entities.EndUpdate();
+					TRV_Entities.EndUpdate();
+				}
 			}
 
 			if (linkedObject is CargoContainerEntity)
 			{
 				CargoContainerEntity container = (CargoContainerEntity)linkedObject;
 
-				InventoryEntity inventory = container.Inventory;
+				if (e.Node.Nodes.Count < 1)
+				{
+					TRV_Entities.BeginUpdate();
 
-				TRV_Entities.BeginUpdate();
+					e.Node.Nodes.Clear();
+					TreeNode itemsNode = e.Node.Nodes.Add("Items");
+					itemsNode.Name = itemsNode.Text;
+					itemsNode.Tag = container.Inventory;
 
-				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node, inventory.Items);
-
-				TRV_Entities.EndUpdate();
+					TRV_Entities.EndUpdate();
+				}
 			}
 
 			if (linkedObject is ReactorEntity)
 			{
 				ReactorEntity reactor = (ReactorEntity)linkedObject;
 
-				InventoryEntity inventory = reactor.Inventory;
+				if (e.Node.Nodes.Count < 1)
+				{
+					TRV_Entities.BeginUpdate();
 
-				TRV_Entities.BeginUpdate();
+					e.Node.Nodes.Clear();
+					TreeNode itemsNode = e.Node.Nodes.Add("Items");
+					itemsNode.Name = itemsNode.Text;
+					itemsNode.Tag = reactor.Inventory;
 
-				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node, inventory.Items);
-
-				TRV_Entities.EndUpdate();
+					TRV_Entities.EndUpdate();
+				}
 			}
 
 			if (linkedObject is ShipToolBaseEntity)
 			{
 				ShipToolBaseEntity shipTool = (ShipToolBaseEntity)linkedObject;
 
-				InventoryEntity inventory = shipTool.Inventory;
+				if (e.Node.Nodes.Count < 1)
+				{
+					TRV_Entities.BeginUpdate();
 
-				TRV_Entities.BeginUpdate();
+					e.Node.Nodes.Clear();
+					TreeNode itemsNode = e.Node.Nodes.Add("Items");
+					itemsNode.Name = itemsNode.Text;
+					itemsNode.Tag = shipTool.Inventory;
 
-				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node, inventory.Items);
-
-				TRV_Entities.EndUpdate();
+					TRV_Entities.EndUpdate();
+				}
 			}
 
 			if (linkedObject is ShipDrillEntity)
 			{
 				ShipDrillEntity shipDrill = (ShipDrillEntity)linkedObject;
 
-				InventoryEntity inventory = shipDrill.Inventory;
+				if (e.Node.Nodes.Count < 1)
+				{
+					TRV_Entities.BeginUpdate();
 
-				TRV_Entities.BeginUpdate();
+					e.Node.Nodes.Clear();
+					TreeNode itemsNode = e.Node.Nodes.Add("Items");
+					itemsNode.Name = itemsNode.Text;
+					itemsNode.Tag = shipDrill.Inventory;
 
-				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node, inventory.Items);
-
-				TRV_Entities.EndUpdate();
+					TRV_Entities.EndUpdate();
+				}
 			}
 
 			if (linkedObject is ProductionBlockEntity)
 			{
 				ProductionBlockEntity productionBlock = (ProductionBlockEntity)linkedObject;
 
-				TRV_Entities.BeginUpdate();
-
 				if (e.Node.Nodes.Count < 2)
 				{
+					TRV_Entities.BeginUpdate();
+
 					e.Node.Nodes.Clear();
-					e.Node.Nodes.Add("Input");
-					e.Node.Nodes.Add("Output");
+					TreeNode inputNode = e.Node.Nodes.Add("Input");
+					inputNode.Name = inputNode.Text;
+					inputNode.Tag = productionBlock.InputInventory;
+					TreeNode outputNode = e.Node.Nodes.Add("Output");
+					outputNode.Name = outputNode.Text;
+					outputNode.Tag = productionBlock.OutputInventory;
+
+					TRV_Entities.EndUpdate();
 				}
+			}
 
-				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node.Nodes[0], productionBlock.InputInventory.Items);
-				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node.Nodes[1], productionBlock.OutputInventory.Items);
+			if (linkedObject is InventoryEntity)
+			{
+				BTN_Entities_New.Enabled = true;
 
-				TRV_Entities.EndUpdate();
+				InventoryEntity inventory = (InventoryEntity)linkedObject;
+
+				UpdateNodeInventoryItemBranch<InventoryItemEntity>(e.Node, inventory.Items);
+			}
+
+			if (linkedObject is InventoryItemEntity)
+			{
+				BTN_Entities_New.Enabled = true;
+				BTN_Entities_Delete.Enabled = true;
 			}
 		}
 
 		private void BTN_Entities_Delete_Click(object sender, EventArgs e)
 		{
-			Object linkedObject = TRV_Entities.SelectedNode.Tag;
-			if (linkedObject is BaseEntity)
+			try
 			{
-				try
-				{
-					BaseEntity item = (BaseEntity)linkedObject;
-					item.Dispose();
+				Object linkedObject = TRV_Entities.SelectedNode.Tag;
+				if (!(linkedObject is BaseObject))
+					return;
 
-					TreeNode parentNode = TRV_Entities.SelectedNode.Parent;
-					TRV_Entities.SelectedNode.Tag = null;
-					TRV_Entities.SelectedNode.Remove();
-					TRV_Entities.SelectedNode = parentNode.FirstNode;
-					if(parentNode.FirstNode != null)
-						PG_Entities_Details.SelectedObject = parentNode.FirstNode.Tag;
-				}
-				catch (Exception ex)
-				{
-					MessageBox.Show(ex.ToString());
-				}
+				BaseObject baseObject = (BaseObject)linkedObject;
+				baseObject.Dispose();
+
+				TreeNode parentNode = TRV_Entities.SelectedNode.Parent;
+				TRV_Entities.SelectedNode.Tag = null;
+				TreeNode newSelectedNode = TRV_Entities.SelectedNode.NextVisibleNode;
+				if (newSelectedNode == null)
+					newSelectedNode = TRV_Entities.SelectedNode.PrevVisibleNode;
+				if (newSelectedNode == null)
+					newSelectedNode = parentNode.FirstNode;
+				TRV_Entities.SelectedNode.Remove();
+				if (parentNode.FirstNode != null)
+					PG_Entities_Details.SelectedObject = parentNode.FirstNode.Tag;
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.ToString());
 			}
 		}
 
 		private void BTN_Entities_New_Click(object sender, EventArgs e)
 		{
-			OpenFileDialog openFileDialog = new OpenFileDialog
-			{
-				InitialDirectory = GameInstallationInfo.GamePath,
-				DefaultExt = "sbc file (*.sbc)"
-			};
+			TreeNode selectedNode = TRV_Entities.SelectedNode;
 
-			if (openFileDialog.ShowDialog() == DialogResult.OK)
+			if (selectedNode == null)
+				return;
+
+			TreeNode parentNode = selectedNode.Parent;
+
+			if (parentNode == null)
+				return;
+
+			if (parentNode.Tag != null && parentNode.Tag is SectorObjectManager)
 			{
-				FileInfo fileInfo = new FileInfo(openFileDialog.FileName);
-				if (fileInfo.Exists)
+				if (selectedNode == parentNode.Nodes[0])
 				{
-					try
-					{
-						BaseEntity newEntity = null;
-
-						if (TRV_Entities.SelectedNode != null && TRV_Entities.SelectedNode.Tag != null && TRV_Entities.SelectedNode.Tag is BaseEntity)
-						{
-							BaseEntity selectedEntity = (BaseEntity)TRV_Entities.SelectedNode.Tag;
-
-							if (selectedEntity is CubeGridEntity)
-								newEntity = new CubeGridEntity(fileInfo);
-							else if (selectedEntity is CharacterEntity)
-								newEntity = new CharacterEntity(fileInfo);
-						}
-
-						if(newEntity != null)
-							SectorObjectManager.Instance.AddEntity(newEntity);
-					}
-					catch (Exception ex)
-					{
-						LogManager.GameLog.WriteLine(ex);
-						MessageBox.Show(this, ex.ToString());
-					}
+					CreateCubeGridImportDialog();
+					return;
 				}
+			}
+
+			if (selectedNode.Tag == null)
+				return;
+
+			if (!(selectedNode.Tag is BaseObject))
+				return;
+
+			BaseObject linkedObject = (BaseObject)selectedNode.Tag;
+
+			if (linkedObject is InventoryEntity)
+			{
+				InventoryItemDialog newItemDialog = new InventoryItemDialog();
+				newItemDialog.Container = (InventoryEntity)linkedObject;
+				newItemDialog.ShowDialog(this);
+				return;
+			}
+
+			if(linkedObject is InventoryItemEntity)
+			{
+				InventoryItemDialog newItemDialog = new InventoryItemDialog();
+				newItemDialog.Container = ((InventoryItemEntity)linkedObject).Container;
+				newItemDialog.ShowDialog(this);
+				return;
+			}
+
+			if(linkedObject is CubeGridEntity)
+			{
+				CreateCubeGridImportDialog();
+				return;
 			}
 		}
 
@@ -1287,15 +1348,40 @@ namespace SEServerExtender
 			PG_Entities_Details.SelectedObject = linkedObject;
 		}
 
+		private void CreateCubeGridImportDialog()
+		{
+			OpenFileDialog openFileDialog = new OpenFileDialog
+			{
+				InitialDirectory = GameInstallationInfo.GamePath,
+				DefaultExt = "sbc file (*.sbc)"
+			};
+
+			if (openFileDialog.ShowDialog() == DialogResult.OK)
+			{
+				FileInfo fileInfo = new FileInfo(openFileDialog.FileName);
+				if (fileInfo.Exists)
+				{
+					try
+					{
+						CubeGridEntity cubeGrid = new CubeGridEntity(fileInfo);
+
+						SectorObjectManager.Instance.AddEntity(cubeGrid);
+					}
+					catch (Exception ex)
+					{
+						LogManager.GameLog.WriteLine(ex);
+						MessageBox.Show(this, ex.ToString());
+					}
+				}
+			}
+		}
+
 		#endregion
 
 		#region "Chat"
 
 		private void ChatViewRefresh(object sender, EventArgs e)
 		{
-			if (m_server.CommandLineArgs.noGUI)
-				return;
-
 			LST_Chat_Messages.BeginUpdate();
 
 			string[] chatMessages = ChatManager.Instance.ChatMessages.ToArray();
@@ -1312,13 +1398,15 @@ namespace SEServerExtender
 
 			LST_Chat_ConnectedPlayers.BeginUpdate();
 
-			List<ulong> connectedPlayers = ServerNetworkManager.Instance.GetConnectedPlayers();
+			List<ulong> connectedPlayers = PlayerManager.Instance.ConnectedPlayers;
 			if (connectedPlayers.Count != LST_Chat_ConnectedPlayers.Items.Count)
 			{
 				LST_Chat_ConnectedPlayers.Items.Clear();
 				foreach (ulong remoteUserId in connectedPlayers)
 				{
-					LST_Chat_ConnectedPlayers.Items.Add(remoteUserId.ToString());
+					string playerName = PlayerMap.Instance.GetPlayerNameFromSteamId(remoteUserId);
+
+					LST_Chat_ConnectedPlayers.Items.Add(playerName);
 				}
 			}
 
@@ -1533,7 +1621,8 @@ namespace SEServerExtender
 				LST_Plugins.Items.Clear();
 				foreach (var key in PluginManager.Instance.Plugins.Keys)
 				{
-					LST_Plugins.Items.Add(key);
+					PluginBase plugin = (PluginBase)PluginManager.Instance.Plugins[key];
+					LST_Plugins.Items.Add(plugin.Name + " - " + key.ToString());
 				}
 				LST_Plugins.SelectedIndex = selectedIndex;
 				LST_Plugins.EndUpdate();
@@ -1545,7 +1634,8 @@ namespace SEServerExtender
 			if (LST_Plugins.SelectedItem == null)
 				return;
 
-			Guid selectedItem = (Guid)LST_Plugins.SelectedItem;
+			int selectedIndex = LST_Plugins.SelectedIndex;
+			Guid selectedItem = PluginManager.Instance.Plugins.Keys.ElementAt(selectedIndex);
 			Object plugin = PluginManager.Instance.Plugins[selectedItem];
 
 			PG_Plugins.SelectedObject = plugin;
@@ -1568,7 +1658,8 @@ namespace SEServerExtender
 			if (LST_Plugins.SelectedItem == null)
 				return;
 
-			Guid selectedItem = (Guid)LST_Plugins.SelectedItem;
+			int selectedIndex = LST_Plugins.SelectedIndex;
+			Guid selectedItem = PluginManager.Instance.Plugins.Keys.ElementAt(selectedIndex);
 			PluginManager.Instance.UnloadPlugin(selectedItem);
 		}
 
@@ -1577,7 +1668,8 @@ namespace SEServerExtender
 			if (LST_Plugins.SelectedItem == null)
 				return;
 
-			Guid selectedItem = (Guid)LST_Plugins.SelectedItem;
+			int selectedIndex = LST_Plugins.SelectedIndex;
+			Guid selectedItem = PluginManager.Instance.Plugins.Keys.ElementAt(selectedIndex);
 			PluginManager.Instance.InitPlugin(selectedItem);
 		}
 
@@ -1647,12 +1739,10 @@ namespace SEServerExtender
 		}
 
 		#endregion
-
         private void automatedButtonChat_Click(object sender, EventArgs e)
         {
             var messageDialog = new Forms.Messages(this).ShowDialog();
         }
-
-        #endregion
-    }
+		#endregion
+	}
 }

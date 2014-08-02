@@ -67,6 +67,7 @@
     <Compile Include="API\Entity\BatteryEntity.cs" />
     <Compile Include="API\Entity\PowerProducer.cs" />
     <Compile Include="API\Entity\PowerReceiver.cs" />
+    <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\AntennaEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\AssemblerEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\BatteryBlockEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ConveyorBlockEntity.cs" />
@@ -88,7 +89,6 @@
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ShipWelderEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\SolarPanelEntity.cs" />
     <Compile Include="API\Entity\Sector\SectorObject\CubeGrid\CubeBlock\ThrustEntity.cs" />
-    <Compile Include="API\Objects\Player.cs" />
     <Compile Include="API\Server\ServerNetworkManager.cs" />
     <Compile Include="API\Utility\Utility.cs" />
     <Compile Include="API\Entity\SectorEntity.cs" />
